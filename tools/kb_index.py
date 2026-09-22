@@ -41,8 +41,9 @@ def commit_sha() -> str:
 
 def collect_docs() -> list[dict]:
     docs = []
+    excluded_dirs = {".git", ".kb-standard", "node_modules"}
     for path in sorted(REPO_ROOT.rglob("*.md")):
-        if ".git" in path.parts or path.name in ("README.md", "INDEX.md", "AGENTS.md"):
+        if excluded_dirs & set(path.parts) or path.name in ("README.md", "INDEX.md", "AGENTS.md"):
             continue
         try:
             post = frontmatter.load(path)

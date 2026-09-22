@@ -41,10 +41,20 @@ jobs:
 on:
   push:
     branches: [main]
+permissions:
+  contents: write
 jobs:
   index:
     uses: SI-Knowledge/kb-standard/.github/workflows/kb-index.yml@main
+    permissions:
+      contents: write
 ```
+
+> The `permissions: contents: write` block is required in the caller because
+> this repo's default workflow token permission is `read` (org-wide setting)
+> — a reusable workflow can never request more than what the caller grants,
+> so it must be declared explicitly here, not just inside `kb-index.yml`
+> itself. Omitting it produces a silent `startup_failure` with no job logs.
 
 Upgrading convention for every repo at once = editing this repo. Once this
 has stabilized, pin callers to a tag (`@v1`) instead of `@main` so upgrades

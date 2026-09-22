@@ -178,9 +178,10 @@ def main() -> int:
     kbrepo = check_kbrepo_yml()
     all_ids: dict[str, Path] = {}
 
+    EXCLUDED_DIRS = {".git", "node_modules", ".kb-standard"}
     md_files = [
         p for p in REPO_ROOT.rglob("*")
-        if p.is_file() and ".git" not in p.parts and "node_modules" not in p.parts
+        if p.is_file() and not EXCLUDED_DIRS & set(p.parts)
     ]
     for path in md_files:
         lint_file(path, kbrepo, all_ids)
