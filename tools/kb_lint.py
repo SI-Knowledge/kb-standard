@@ -49,6 +49,15 @@ ALLOWED_DOC_FOLDERS = {
 FORBIDDEN_EXTENSIONS = {".env", ".pem", ".p12", ".pfx", ".kdbx", ".xlsx", ".docx", ".pptx", ".pdf"}
 FORBIDDEN_FILENAMES_RE = re.compile(r"^(id_rsa.*|credentials\.json)$", re.IGNORECASE)
 
+# Advisory only — a sensitive Thai keyword followed by a value is a WARNING
+# (manager judgement call), not a gitleaks-style hard fail: unlike a real
+# secret/PII pattern, this keyword list has a high false-positive rate (e.g.
+# a doc that just *talks about* "เลขบัญชี" policy, not a real account number).
+SENSITIVE_CONTEXT_WORDS = ["รหัสผ่าน", "พาสเวิร์ด", "เลขบัญชี", "บัตรประชาชน", "เงินเดือน", "ค่าจ้าง"]
+SENSITIVE_CONTEXT_RE = re.compile(
+    "(" + "|".join(SENSITIVE_CONTEXT_WORDS) + r")\s*[:=]?\s*\S+", re.IGNORECASE
+)
+
 errors: list[tuple[str, int, str]] = []
 warnings: list[tuple[str, int, str]] = []
 
@@ -145,6 +154,11 @@ def lint_file(path: Path, kbrepo: dict | None, all_ids: dict[str, Path]) -> None
     top_folder = path.relative_to(REPO_ROOT).parts[0]
     if allowed_folders and top_folder not in allowed_folders:
         warn(rel, 1, f"doc_type '{meta['doc_type']}' is usually placed in {allowed_folders}, found in '{top_folder}'")
+
+    for i, line in enumerate(post.content.splitlines(), start=1):
+        m = SENSITIVE_CONTEXT_RE.search(line)
+        if m:
+            warn(rel, i, f"contains sensitive-context keyword '{m.group(1)}' followed by a value — manager should confirm no real data is exposed")
 
     if not FAST:
         last_mod = git_last_modified(path)

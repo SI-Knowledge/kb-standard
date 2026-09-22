@@ -16,12 +16,6 @@ regex = '''\b[0-9]{13}\b'''
 tags = ["pii", "thailand", "finance"]
 
 [[rules]]
-id = "th-sensitive-context"
-description = "Thai words indicating sensitive data followed by a value (warn, human judgement call)"
-regex = '''(?i)(รหัสผ่าน|พาสเวิร์ด|เลขบัญชี|บัตรประชาชน|เงินเดือน|ค่าจ้าง)\s*[:=]?\s*\S+'''
-tags = ["thailand", "warning"]
-
-[[rules]]
 id = "line-channel-token"
 description = "LINE Channel access token"
 regex = '''[A-Za-z0-9+/=]{100,}'''
@@ -68,3 +62,9 @@ paths = [
 # Forbidden path patterns — flagged separately by kb_lint.py, not gitleaks itself,
 # because gitleaks only scans content, not "this extension should never exist here".
 # See tools/kb_lint.py FORBIDDEN_EXTENSIONS / FORBIDDEN_FILENAMES.
+#
+# "Sensitive Thai keyword followed by a value" (รหัสผ่าน/เลขบัญชี/เงินเดือน/...)
+# is NOT a gitleaks rule here on purpose: gitleaks has no concept of a
+# non-blocking rule (every match fails the job), but this pattern is meant to
+# be advisory/warning-only per design ("severity = warning, manager decides").
+# It's implemented instead as a WARNING in tools/kb_lint.py (SENSITIVE_CONTEXT_WORDS).
