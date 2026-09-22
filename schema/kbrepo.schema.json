@@ -10,8 +10,8 @@
     "managers": {
       "type": "array",
       "items": { "type": "string", "pattern": "^@[A-Za-z0-9-]+$" },
-      "minItems": 2,
-      "description": "bus factor >= 2 managers per repo"
+      "minItems": 1,
+      "description": "recommended bus factor >= 2 managers per repo; 1 is allowed for solo pilot repos but should be raised as soon as a second manager is onboarded"
     },
     "max_sensitivity": {
       "type": "string",

@@ -83,6 +83,8 @@ def check_kbrepo_yml() -> dict | None:
     except jsonschema.ValidationError as e:
         err(".kbrepo.yml", 1, f"schema violation: {e.message}")
         return None
+    if len(data.get("managers", [])) < 2:
+        warn(".kbrepo.yml", 1, "only 1 manager on file — bus factor risk, add a second manager when available")
     return data
 
 
