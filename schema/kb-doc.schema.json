@@ -1,0 +1,105 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://si-knowledge/kb-standard/schema/kb-doc.schema.json",
+  "title": "KB document frontmatter",
+  "type": "object",
+  "required": [
+    "id", "title_th", "title_en", "doc_type", "project",
+    "owner", "managers", "status", "sensitivity",
+    "created", "last_updated", "review_by", "source_of_truth",
+    "lang"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "stable ID, never changes even if file is moved/renamed"
+    },
+    "title_th": { "type": "string", "minLength": 1 },
+    "title_en": { "type": "string", "minLength": 1 },
+    "doc_type": {
+      "type": "string",
+      "enum": [
+        "overview", "decision", "sop", "meeting-note", "spec",
+        "client-profile", "contract-summary", "postmortem",
+        "faq", "glossary", "reference", "proposal"
+      ]
+    },
+    "project": { "type": "string", "minLength": 1 },
+    "owner": { "type": "string", "pattern": "^@[A-Za-z0-9-]+$" },
+    "managers": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^@[A-Za-z0-9-]+$" },
+      "minItems": 1
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "in-review", "approved", "superseded", "deprecated"]
+    },
+    "sensitivity": {
+      "type": "string",
+      "enum": ["public", "internal", "confidential", "restricted"]
+    },
+    "created": { "type": "string", "format": "date" },
+    "last_updated": { "type": "string", "format": "date" },
+    "review_by": { "type": "string", "format": "date" },
+    "source_of_truth": { "type": "boolean" },
+    "canonical": { "type": ["string", "null"] },
+    "lang": { "type": "string", "enum": ["th", "en", "th-en"] },
+    "summary_en": { "type": "string" },
+    "summary_en_status": { "type": "string", "enum": ["ai-draft", "reviewed"] },
+    "summary_th": { "type": "string" },
+    "keywords_th": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "supersedes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "related": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "ref"],
+        "properties": {
+          "type": { "type": "string", "enum": ["meeting", "external", "document", "verbal"] },
+          "ref": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "secret_ref": { "type": ["string", "null"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "source_of_truth": { "const": false } } },
+      "then": { "required": ["canonical"] }
+    },
+    {
+      "if": {
+        "properties": {
+          "doc_type": { "enum": ["decision", "contract-summary", "client-profile"] }
+        }
+      },
+      "then": { "required": ["sources"] }
+    },
+    {
+      "if": { "properties": { "lang": { "const": "th" } } },
+      "then": { "required": ["summary_en"] }
+    },
+    {
+      "if": { "properties": { "lang": { "const": "en" } } },
+      "then": { "required": ["summary_th"] }
+    }
+  ]
+}
