@@ -72,6 +72,19 @@ def git_last_modified(path: Path) -> datetime.date | None:
         return None
 
 
+def _stringify_dates(obj):
+    """PyYAML auto-parses unquoted ISO dates (2026-09-22) into datetime.date
+    objects, but our JSON Schema declares them as {"type": "string", "format":
+    "date"} — normalize recursively so schema validation sees strings either way."""
+    if isinstance(obj, datetime.date):
+        return obj.isoformat()
+    if isinstance(obj, dict):
+        return {k: _stringify_dates(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_stringify_dates(v) for v in obj]
+    return obj
+
+
 def check_kbrepo_yml() -> dict | None:
     kbrepo_path = REPO_ROOT / ".kbrepo.yml"
     if not kbrepo_path.exists():
@@ -109,7 +122,7 @@ def lint_file(path: Path, kbrepo: dict | None, all_ids: dict[str, Path]) -> None
         err(rel, 1, f"failed to parse frontmatter: {e}")
         return
 
-    meta = post.metadata
+    meta = _stringify_dates(post.metadata)
     try:
         jsonschema.validate(meta, SCHEMA_DOC)
     except jsonschema.ValidationError as e:
@@ -129,8 +142,9 @@ def lint_file(path: Path, kbrepo: dict | None, all_ids: dict[str, Path]) -> None
             err(rel, 1, f"sensitivity '{meta['sensitivity']}' exceeds repo max_sensitivity '{kbrepo['max_sensitivity']}'")
 
     allowed_folders = ALLOWED_DOC_FOLDERS.get(meta["doc_type"])
-    if allowed_folders and rel.split("/")[0] not in allowed_folders:
-        warn(rel, 1, f"doc_type '{meta['doc_type']}' is usually placed in {allowed_folders}, found in '{rel.split('/')[0]}'")
+    top_folder = path.relative_to(REPO_ROOT).parts[0]
+    if allowed_folders and top_folder not in allowed_folders:
+        warn(rel, 1, f"doc_type '{meta['doc_type']}' is usually placed in {allowed_folders}, found in '{top_folder}'")
 
     if not FAST:
         last_mod = git_last_modified(path)
